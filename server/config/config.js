@@ -10,7 +10,7 @@ let urlDB;
 if (process.env.NODE_ENV === 'dev') {
     urlDB = 'mongodb://localhost:27017/stilltaiga';
 } else {
-    urlDB = 'mongodb+srv://mojicator:oOvglOGEgCHOAPbf@cluster0-ez2fe.mongodb.net/test';
+    urlDB = process.env.MONGO_URI;
 }
 
 process.env.URLDB = urlDB;
