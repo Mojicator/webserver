@@ -1,21 +1,22 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const _ = require('underscore');
-const Admin = require('../models/admin');
+const User = require('../models/user');
+const { checkToken, checkUser } = require('../middleware/authentication');
 
 const router = express.Router();
 
 const saltRounds = 10;
 
-router.get('/admin', function(req, res) {
+router.get('/user', [checkToken, checkUser], function(req, res) {
 
     let since = Number(req.query.since) || 0;
     let limit = Number(req.query.limit) || 10;
 
-    Admin.find({ state: true })
+    User.find({ state: true })
         .skip(since)
         .limit(limit)
-        .exec((err, admins) => {
+        .exec((err, users) => {
             if (err) {
                 return res.status(400).json({
                     ok: false,
@@ -23,11 +24,11 @@ router.get('/admin', function(req, res) {
                 });
             }
 
-            Admin.count({ state: true }, (err, actives) => {
+            User.countDocuments({ state: true }, (err, actives) => {
                 res.json({
                     ok: true,
                     total: actives,
-                    admins
+                    users
                 });
             });
 
@@ -35,10 +36,10 @@ router.get('/admin', function(req, res) {
         });
 });
 
-router.post('/admin', function(req, res) {
+router.post('/user', [checkToken, checkUser], function(req, res) {
     let body = req.body;
 
-    let admin = new Admin({
+    let user = new User({
         name: body.name,
         contact: {
             email: body.email,
@@ -49,7 +50,7 @@ router.post('/admin', function(req, res) {
         role: body.role
     });
 
-    admin.save((err, adminDB) => {
+    user.save((err, userDB) => {
         if (err) {
             return res.status(400).json({
                 ok: false,
@@ -59,17 +60,17 @@ router.post('/admin', function(req, res) {
 
         res.json({
             ok: true,
-            admin: adminDB
+            user: userDB
         });
     });
 });
 
-router.put('/admin/:id', function(req, res) {
+router.put('/user/:id', [checkToken, checkUser], function(req, res) {
     let id = req.params.id;
-    let validFields = ['name', 'img', 'role', 'tel', 'job', 'state'];
+    let validFields = ['name', 'img', 'role', 'contact.tel', 'contact.job', 'state'];
     let body = _.pick(req.body, validFields);
-
-    Admin.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, adminDB) => {
+    console.log('pasa!');
+    User.findByIdAndUpdate(id, body, { new: true, runValidators: true }, (err, userDB) => {
         if (err) {
             return res.status(400).json({
                 of: false,
@@ -79,15 +80,15 @@ router.put('/admin/:id', function(req, res) {
 
         res.json({
             ok: true,
-            admin: adminDB
+            user: userDB
         });
     });
 });
 
-router.delete('/bye-bye-admin/:id', function(req, res) {
+router.delete('/bye-bye-user/:id', [checkToken, checkUser], function(req, res) {
     let id = req.params.id;
 
-    Admin.findByIdAndRemove(id, (err, adminDeleted) => {
+    User.findByIdAndRemove(id, (err, userDeleted) => {
         if (err) {
             return res.status(400).json({
                 ok: false,
@@ -95,26 +96,26 @@ router.delete('/bye-bye-admin/:id', function(req, res) {
             });
         }
 
-        if (!adminDeleted) {
+        if (!userDeleted) {
             return res.status(400).json({
                 ok: false,
                 err: {
-                    message: 'Admin no encontrado'
+                    message: 'user no encontrado'
                 }
             });
         }
 
         res.json({
             ok: true,
-            admin: adminDeleted
+            user: userDeleted
         });
     });
 });
 
-router.delete('/bye-admin/:id', function(req, res) {
+router.delete('/bye-user/:id', [checkToken, checkUser], function(req, res) {
     let id = req.params.id;
 
-    Admin.findByIdAndUpdate(id, { state: false }, { new: true }, (err, adminOff) => {
+    User.findByIdAndUpdate(id, { state: false }, { new: true }, (err, userOff) => {
         if (err) {
             return res, status(400).json({
                 ok: false,
@@ -124,7 +125,7 @@ router.delete('/bye-admin/:id', function(req, res) {
 
         res.json({
             ok: true,
-            admin: adminOff
+            user: userOff
         });
     });
 

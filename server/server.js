@@ -12,7 +12,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 // api rest
-app.use('/', require('./routes/api').router);
+app.use('/', require('./routes/index').app);
 
 // error handling middleware
 app.use((err, req, res, next) => {
@@ -22,10 +22,10 @@ app.use((err, req, res, next) => {
 // connection mongoDB
 mongoose.connect(process.env.URLDB, { useNewUrlParser: true, useCreateIndex: true }, (err, req) => {
     if (err) throw err;
-    console.log('Base de datos online');
+    console.log('Database online');
 });
 
 // web server
 app.listen(process.env.PORT, () => {
-    console.log('Escuchando peticiones');
+    console.log('Listening...');
 });
